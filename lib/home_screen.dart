@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:weather_app/widgets/AdditionalInformation.dart';
 import 'package:weather_app/widgets/HourlyForecast.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,7 +23,7 @@ class _HomePageState extends State<HomePage> {
   //   super.initState();
   //   getCurrentWeather();
   // }
-
+  late Future<Map<String, dynamic>> weather;
   Future<Map<String, dynamic>> getCurrentWeather() async {
     try {
       String? APIKey = dotenv.env['weatherAPIKey'];
@@ -44,6 +45,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    weather = getCurrentWeather();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -52,12 +59,16 @@ class _HomePageState extends State<HomePage> {
         actions: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 5.0),
-            child: IconButton(onPressed: () {}, icon: Icon(Icons.refresh)),
+            child: IconButton(onPressed: () {
+              setState(() {
+                weather = getCurrentWeather();
+              });
+            }, icon: Icon(Icons.refresh)),
           ),
         ],
       ),
       body: FutureBuilder(
-        future: getCurrentWeather(),
+        future: weather,
         builder: (context, snapshot) {
           print(snapshot);
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -69,7 +80,7 @@ class _HomePageState extends State<HomePage> {
             return Center(child: Text(snapshot.error.toString()));
           }
           final data = snapshot.data!;
-          final currentWeatherData =  data['list'][0];
+          final currentWeatherData = data['list'][0];
           final temperature = currentWeatherData['main']['temp'];
           final currentSky = currentWeatherData['weather'][0]['main'];
           final currentHumidity = currentWeatherData['main']['humidity'];
@@ -105,7 +116,9 @@ class _HomePageState extends State<HomePage> {
                                 height: 16,
                               ),
                               Icon(
-                                currentSky == 'Clouds' || currentSky == 'Rain' ? Icons.cloud : Icons.sunny,
+                                currentSky == 'Clouds' || currentSky == 'Rain'
+                                    ? Icons.cloud
+                                    : Icons.sunny,
                                 size: 60,
                               ),
                               const SizedBox(
@@ -137,42 +150,40 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(
                   height: 15,
                 ),
-                SingleChildScrollView(
+                /*SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      HourlyForeCastWidgets(
-                        time: "03:00",
-                        icon: Icons.cloud,
-                        temperature: "301.2 F",
-                      ),
-                      HourlyForeCastWidgets(
-                        time: "04:00",
-                        icon: Icons.sunny,
-                        temperature: "275.2 F",
-                      ),
-                      HourlyForeCastWidgets(
-                        time: "05:00",
-                        icon: Icons.sunny_snowing,
-                        temperature: "295.2 F",
-                      ),
-                      HourlyForeCastWidgets(
-                        time: "06:00",
-                        icon: Icons.shower,
-                        temperature: "320.2 F",
-                      ),
-                      HourlyForeCastWidgets(
-                        time: "07:00",
-                        icon: Icons.cloud,
-                        temperature: "301.2 F",
-                      ),
-                      HourlyForeCastWidgets(
-                        time: "08:00",
-                        icon: Icons.cloud,
-                        temperature: "301.2 F",
-                      ),
+                      for(int i=0; i<12; i++)
+                          HourlyForeCastWidgets(
+                            time: "03:00",
+                            icon: data['list'][i+1]['weather'][0]['main'] == 'Clouds'
+                            || data['list'][i+1]['weather'][0]['main'] == 'Rain' ? Icons.cloud : Icons.sunny,
+                            temperature: data['list'][i+1]['main']['temp'].toString(),
+                          ),
                     ],
                   ),
+                ),*/
+                SizedBox(
+                  height: 120,
+                  child: ListView.builder(
+                      itemCount: 5,
+                      scrollDirection: Axis.horizontal,
+                      itemBuilder: (context, index) {
+                        final hourlyForecast = data['list'][index + 1];
+                        final hourlySky =
+                            data['list'][index + 1]['weather'][0]['main'];
+                        final hourlyTemp =
+                            hourlyForecast['main']['temp'].toString();
+                        final time = DateTime.parse(hourlyForecast['dt_txt']);
+                        return HourlyForeCastWidgets(
+                            // time: hourlyForecast['dt_txt'].toString(),
+                          time: DateFormat.j().format(time),
+                            icon: hourlySky == 'Clouds' || hourlySky == 'Rain'
+                                ? Icons.cloud
+                                : Icons.sunny,
+                            temperature: hourlyTemp);
+                      }),
                 ),
                 const SizedBox(
                   height: 15,
