@@ -23,10 +23,10 @@ class _HomePageState extends State<HomePage> {
   //   getCurrentWeather();
   // }
 
-  Future getCurrentWeather() async {
+  Future<Map<String, dynamic>> getCurrentWeather() async {
     try {
       String? APIKey = dotenv.env['weatherAPIKey'];
-      String cityName = 'London,uk';
+      String cityName = 'Dhaka,BD';
       final result = await http.get(
         Uri.parse(
             'http://api.openweathermap.org/data/2.5/forecast?q=$cityName&APPID=$APIKey'),
@@ -68,6 +68,15 @@ class _HomePageState extends State<HomePage> {
           if (snapshot.hasError) {
             return Center(child: Text(snapshot.error.toString()));
           }
+          final data = snapshot.data!;
+          final currentWeatherData =  data['list'][0];
+          final temperature = currentWeatherData['main']['temp'];
+          final currentSky = currentWeatherData['weather'][0]['main'];
+          final currentHumidity = currentWeatherData['main']['humidity'];
+          // print(data['list'][0]['wind']['speed']);
+          final currentWindSpeed = currentWeatherData['wind']['speed'];
+          final currentPressure = currentWeatherData['main']['pressure'];
+
           return Padding(
             padding: const EdgeInsets.all(10.0),
             child: Column(
@@ -86,7 +95,7 @@ class _HomePageState extends State<HomePage> {
                           child: Column(
                             children: [
                               Text(
-                                "309.2 k",
+                                "$temperature K",
                                 style: TextStyle(
                                   fontSize: 30,
                                   fontWeight: FontWeight.bold,
@@ -96,14 +105,14 @@ class _HomePageState extends State<HomePage> {
                                 height: 16,
                               ),
                               Icon(
-                                Icons.cloud,
+                                currentSky == 'Clouds' || currentSky == 'Rain' ? Icons.cloud : Icons.sunny,
                                 size: 60,
                               ),
                               const SizedBox(
                                 height: 16,
                               ),
                               Text(
-                                "Rain",
+                                currentSky,
                                 style: TextStyle(
                                   fontSize: 25,
                                 ),
@@ -119,7 +128,7 @@ class _HomePageState extends State<HomePage> {
                   height: 15,
                 ),
                 Text(
-                  "Weather Forcast",
+                  "Hourly Forcast",
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -184,17 +193,17 @@ class _HomePageState extends State<HomePage> {
                     Additionalinformation(
                       icon: Icons.water_drop,
                       label: "Humidity",
-                      value: "91",
+                      value: currentHumidity.toString(),
                     ),
                     Additionalinformation(
                       icon: Icons.air,
                       label: "Wind Speed",
-                      value: "7.5",
+                      value: currentWindSpeed.toString(),
                     ),
                     Additionalinformation(
                       icon: Icons.beach_access,
                       label: "Pressure",
-                      value: "1006",
+                      value: currentPressure.toString(),
                     ),
                   ],
                 )
