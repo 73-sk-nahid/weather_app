@@ -20,6 +20,7 @@ class _WeatherAppState extends State<WeatherApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.light(useMaterial3: true),
+      darkTheme: ThemeData.dark(useMaterial3: true),
       home: HomePage(),
     );
   }

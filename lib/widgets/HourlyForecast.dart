@@ -39,7 +39,7 @@ class HourlyForeCastWidgets extends StatelessWidget {
               height: 10,
             ),
             Text(
-              temperature,
+              '$temperature°C',
               style: TextStyle(
                 fontSize: 15,
               ),

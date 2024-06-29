@@ -81,7 +81,10 @@ class _HomePageState extends State<HomePage> {
           }
           final data = snapshot.data!;
           final currentWeatherData = data['list'][0];
-          final temperature = currentWeatherData['main']['temp'];
+          //final temperature = currentWeatherData['main']['temp'];
+          final temperatureInKelvin = currentWeatherData['main']['temp'];
+          final temperatureInCelsius = temperatureInKelvin - 273.15;
+          final temperature = temperatureInCelsius.toStringAsFixed(2);
           final currentSky = currentWeatherData['weather'][0]['main'];
           final currentHumidity = currentWeatherData['main']['humidity'];
           // print(data['list'][0]['wind']['speed']);
@@ -106,7 +109,7 @@ class _HomePageState extends State<HomePage> {
                           child: Column(
                             children: [
                               Text(
-                                "$temperature K",
+                                "$temperature° C",
                                 style: TextStyle(
                                   fontSize: 30,
                                   fontWeight: FontWeight.bold,
@@ -173,8 +176,10 @@ class _HomePageState extends State<HomePage> {
                         final hourlyForecast = data['list'][index + 1];
                         final hourlySky =
                             data['list'][index + 1]['weather'][0]['main'];
-                        final hourlyTemp =
-                            hourlyForecast['main']['temp'].toString();
+                        final temperatureInKelvin = hourlyForecast['main']['temp'];
+                        final temperatureInCelsius = temperatureInKelvin - 273.13;
+                        final hourlyTemp = temperatureInCelsius.toStringAsFixed(2);
+                        //final hourlyTemp = hourlyForecast['main']['temp'].toString();
                         final time = DateTime.parse(hourlyForecast['dt_txt']);
                         return HourlyForeCastWidgets(
                             // time: hourlyForecast['dt_txt'].toString(),
