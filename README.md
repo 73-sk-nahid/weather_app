@@ -13,8 +13,10 @@ This Flutter Weather App fetches real-time weather data using the OpenWeather AP
 - **Location Access:** The app requires permission to access the device's location to provide accurate weather data for the current location.
 
 ## Screenshots
-
-![Weather App Screenshot(Dark Mode)](darkmode.png) ![Weather App Screenshot(Light Mode)](lightmode.png)
+<p align="center">
+  <img src="darkmode.png" alt="Weather App Screenshot (Dark Mode)" width="300"/>
+  <img src="lightmode.png" alt="Weather App Screenshot (Light Mode)" width="300"/>
+</p>
 
 ## Installation
 
