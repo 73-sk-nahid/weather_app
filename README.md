@@ -19,7 +19,7 @@ This Flutter Weather App fetches real-time weather data using the OpenWeather AP
 
 ## Installation
 
-1. Download the APK file from the [GitHub releases](https://github.com/73-sk-nahid/weather_app/app-release.apk) page.
+1. Download the APK file from the [GitHub releases](https://github.com/73-sk-nahid/weather_app/apk) page.
 2. Install the APK on your Android device.
 3. Grant location permission when prompted.
 
