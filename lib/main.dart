@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:weather_app/home_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 Future<void> main() async{
   await dotenv.load(fileName: ".env");
+  WidgetsFlutterBinding.ensureInitialized();
+  await Permission.locationWhenInUse.isDenied.then((valueOfPermission)
+  {
+    if(valueOfPermission)
+      {
+        Permission.locationWhenInUse.request();
+      }
+  });
   runApp(WeatherApp());
 }
 

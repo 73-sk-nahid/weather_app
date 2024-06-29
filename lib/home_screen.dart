@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:weather_app/widgets/AdditionalInformation.dart';
 import 'package:weather_app/widgets/HourlyForecast.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,21 +20,82 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // double? temperature;
-  // bool isLoading = false;
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   getCurrentWeather();
-  // }
   late Future<Map<String, dynamic>> weather;
+  Position? _currentPosition;
+  String? _longitude;
+  String? _latitude;
+  String? _currentAddress;
+
+  Future<bool> _handleLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Location services are disabled. Please enable the services')));
+      return false;
+    }
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Location permissions are denied')));
+        return false;
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Location permissions are permanently denied, we cannot request permissions.')));
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> _getCurrentPosition() async {
+    final hasPermission = await _handleLocationPermission();
+    if (!hasPermission) return;
+    await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high)
+        .then((Position position) {
+      setState(() {
+        _currentPosition = position;
+        _longitude = _currentPosition?.longitude.toString();
+        _latitude = _currentPosition?.latitude.toString();
+        // print('latitude: $_currentPosition?.latitude');
+        // print('longitude: $_currentPosition?.longitude');
+      });
+      _getAddressFromLatLng();
+    }).catchError((e) {
+      debugPrint(e);
+    });
+  }
+
+  Future<void> _getAddressFromLatLng() async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+          _currentPosition!.latitude, _currentPosition!.longitude);
+
+      Placemark place = placemarks[0];
+
+      setState(() {
+        _currentAddress = "${place.locality},${place.isoCountryCode}";
+      });
+    } catch (e) {
+      print('Error in getAddress');
+    }
+  }
+
   Future<Map<String, dynamic>> getCurrentWeather() async {
     try {
       String? APIKey = dotenv.env['weatherAPIKey'];
-      String cityName = 'Dhaka,BD';
+      //_getCurrentPosition();
+      //String cityName = 'Dhaka,BD';
       final result = await http.get(
         Uri.parse(
-            'http://api.openweathermap.org/data/2.5/forecast?q=$cityName&APPID=$APIKey'),
+            'http://api.openweathermap.org/data/2.5/forecast?lat=${_latitude}&lon=${_longitude}&APPID=$APIKey'),
       );
 
       final data = jsonDecode(result.body);
@@ -44,9 +109,17 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  void getlocation() async{
+    await _getCurrentPosition();
+    await _getAddressFromLatLng();
+    await getCurrentWeather();
+  }
+
   @override
   void initState() {
     super.initState();
+    _getCurrentPosition();
+    _getAddressFromLatLng();
     weather = getCurrentWeather();
   }
 
@@ -56,21 +129,46 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Text("Weather App"),
         centerTitle: true,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            _currentAddress.toString(),
+            style: TextStyle(
+              fontSize: 12,
+            ),
+          ),
+        ),
+        /*_latitude != null && _longitude != null
+            ? Padding(
+          padding: const EdgeInsets.only(left: 8.0),
+          child: Center(
+            child: Text(
+              'Lat: $_latitude\nLon: $_longitude',
+              style: TextStyle(fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        )
+            : null,*/
         actions: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 5.0),
-            child: IconButton(onPressed: () {
-              setState(() {
-                weather = getCurrentWeather();
-              });
-            }, icon: Icon(Icons.refresh)),
+            child: IconButton(
+                onPressed: () {
+                  setState(() {
+                    _getCurrentPosition();
+                    _getAddressFromLatLng();
+                    weather = getCurrentWeather();
+                  });
+                },
+                icon: Icon(Icons.refresh)),
           ),
         ],
       ),
       body: FutureBuilder(
-        future: weather,
+        future: getCurrentWeather(),
         builder: (context, snapshot) {
-          print(snapshot);
+          //print(snapshot);
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator.adaptive(),
@@ -176,14 +274,17 @@ class _HomePageState extends State<HomePage> {
                         final hourlyForecast = data['list'][index + 1];
                         final hourlySky =
                             data['list'][index + 1]['weather'][0]['main'];
-                        final temperatureInKelvin = hourlyForecast['main']['temp'];
-                        final temperatureInCelsius = temperatureInKelvin - 273.13;
-                        final hourlyTemp = temperatureInCelsius.toStringAsFixed(2);
+                        final temperatureInKelvin =
+                            hourlyForecast['main']['temp'];
+                        final temperatureInCelsius =
+                            temperatureInKelvin - 273.13;
+                        final hourlyTemp =
+                            temperatureInCelsius.toStringAsFixed(2);
                         //final hourlyTemp = hourlyForecast['main']['temp'].toString();
                         final time = DateTime.parse(hourlyForecast['dt_txt']);
                         return HourlyForeCastWidgets(
                             // time: hourlyForecast['dt_txt'].toString(),
-                          time: DateFormat.j().format(time),
+                            time: DateFormat.j().format(time),
                             icon: hourlySky == 'Clouds' || hourlySky == 'Rain'
                                 ? Icons.cloud
                                 : Icons.sunny,
