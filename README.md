@@ -14,8 +14,7 @@ This Flutter Weather App fetches real-time weather data using the OpenWeather AP
 
 ## Screenshots
 
-![Weather App Screenshot(Dark Mode)](darkmode.png)
-![Weather App Screenshot(Light Mode)](lightmode.png)
+![Weather App Screenshot(Dark Mode)](darkmode.png) ![Weather App Screenshot(Light Mode)](lightmode.png)
 
 ## Installation
 
